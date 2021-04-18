@@ -3,77 +3,111 @@ using Google.Apis.Services;
 using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
 using Google.Apis.Util.Store;
-using NureSEConsultations.Bot.Entities;
+using Microsoft.Extensions.DependencyInjection;
+using NureSEConsultations.Bot.Model;
 using NureSEConsultations.Bot.Parser;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Telegram.Bot;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace NureSEConsultations.Bot
 {
     public class Program
     {
+        private static IServiceProvider services;
+
+        private static ITelegramBotClient botClient;
+
+        private const string CONSULTATION_SHEET_ID = "160pVT-z-OGnpgdlPQFwfJKmsXVb_N1C1NEBTZbcQOGo";
+
+        private static string[] consultationsTypes = {
+            "Зустрічі з куратором (весна)",
+            "1 курс, ПЗПІ-20",
+            "2 курс, ПЗПІ-19",
+            "3 курс, ПЗПІ-18",
+            "4 курс, ПЗПІ-17",
+            "1 курс магістри(5 курс)",
+        };
+
+        private static IDictionary<string, IEnumerable<Consultation>> consultations;
+
+        private static ConsultationRepository consultationsRepository;
+
+        private static void ServicesConfiguration()
+        {
+            var builder = new ServiceCollection();
+
+            builder.AddSingleton<Consultation>();
+
+            services = builder.BuildServiceProvider(
+                new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = false}
+            );
+        }
+
         public static async Task Main(string[] args)
         {
-            const string spreadsheetUrl = "https://docs.google.com/spreadsheets/d/160pVT-z-OGnpgdlPQFwfJKmsXVb_N1C1NEBTZbcQOGo/edit#gid=886702434";
+            ServicesConfiguration();
+            //consultationsRepository = new ConsultationRepository(CONSULTATION_SHEET_ID, null);
 
-            const string clientId = "778237814285-s3ku69pua41b4v6fkh4eatg66j4fm4gp.apps.googleusercontent.com";
-            const string clientSecret = "nYWD6gXs4weNep5Bqb-eowpR";
 
-            const string credsPath = "tokens.json";
-            using var credStream = new FileStream("credentials.json", FileMode.Open, FileAccess.Read);
-            var creds = GoogleWebAuthorizationBroker.AuthorizeAsync(
-                GoogleClientSecrets.Load(credStream).Secrets,
-                new[] { SheetsService.Scope.SpreadsheetsReadonly },
-                "user",
-                CancellationToken.None,
-                new FileDataStore(credsPath, true)
-            ).Result;
-            Console.WriteLine("Saved creds");
+            const string token = "1794463891:AAEtc5EU6CkaTxfBuofZBy7EUKGtj9y8G_o";
+            botClient = new TelegramBotClient(token);
+            var me = await botClient.GetMeAsync();
+            Console.WriteLine($"{me.FirstName} is running...");
 
-            var sheets = new SheetsService(new BaseClientService.Initializer()
+            botClient.OnMessage += OnMessageReceived;
+            botClient.StartReceiving();
+
+            Console.WriteLine("Press ENTER to shut down.");
+            Console.ReadLine();
+
+            botClient.StopReceiving();
+        }
+
+        private static async void OnMessageReceived(object sender, Telegram.Bot.Args.MessageEventArgs e)
+        {
+            if (e.Message.Text != null)
             {
-                HttpClientInitializer = creds,
-                ApplicationName = nameof(NureSEConsultations)
-            });
+                Console.WriteLine($"{e.Message.From.FirstName} {e.Message.From.LastName}: {e.Message.Text}");
 
-            String spreadsheetId = "160pVT-z-OGnpgdlPQFwfJKmsXVb_N1C1NEBTZbcQOGo";
+                if (e.Message.Text == "Список консультацій")
+                {
+                    var row = consultationsTypes.Select(type => new InlineKeyboardButton
+                    {
+                        Text = type,
+                        CallbackData = type + "callback"
+                    }).ToArray();
 
-            String range = "3 курс, ПЗПІ-18!A6:E";
-            SpreadsheetsResource.ValuesResource.GetRequest request =
-                    sheets.Spreadsheets.Values.Get(spreadsheetId, range);
-            ValueRange response = request.Execute();
-            IList<IList<object>> values = response.Values;
-            if (values != null && values.Count > 0)
-            {
-                TableParser<Consultation> tableParser;
-                //tableParser = new TableParser<Consultation>(new CuratorMeetingConsultation("Зустріч з куратором"))
-                //{
-                //    RowExtenders = new IRowsExtender[] { new GroupNameRowsExtender(2), new ConsultationTimeRowsExtender(3) },
-                //};
-                tableParser = new TableParser<Consultation>(new SubjectConsultationMapper())
-                {
-                    RowExtenders = new IRowsExtender[] { new GroupNameRowsExtender(2), new ConsultationTimeRowsExtender(3) },
-                };
-                var consultations = tableParser.ParseTable(values);
-                foreach (var cons in consultations)
-                {
-                    Console.WriteLine($"{cons.Subject} - {cons.Teacher} - {cons.Group} - {cons.Time} - {cons.Link}");
+                    await botClient.SendTextMessageAsync(
+                        chatId: e.Message.Chat,
+                        text: "Тримай ;)",
+                        replyMarkup: new InlineKeyboardMarkup(
+                            inlineKeyboardRow: row
+                        )
+                    );
                 }
-            }
-            else
-            {
-                Console.WriteLine("No data found.");
-            }
+                else
+                {
+                    await botClient.SendTextMessageAsync(
+                      chatId: e.Message.Chat,
+                      text: "You said:\n" + e.Message.Text,
+                      replyMarkup: new ReplyKeyboardMarkup(
+                        keyboardRow: new KeyboardButton[]
+                        {
+                            new KeyboardButton("Список консультацій"),
+                            new KeyboardButton("Статистика"),
+                        }, resizeKeyboard: true)
+                    );
+                }
 
-
-            //const string token = "1794463891:AAEtc5EU6CkaTxfBuofZBy7EUKGtj9y8G_o";
-            //var botClient = new TelegramBotClient(token);
-            //var me = await botClient.GetMeAsync();
-            //Console.WriteLine($"{me.FirstName}");
+            }
         }
     }
 }

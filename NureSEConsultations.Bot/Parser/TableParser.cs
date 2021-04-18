@@ -1,4 +1,4 @@
-﻿using NureSEConsultations.Bot.Entities;
+﻿using NureSEConsultations.Bot.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
