@@ -1,23 +1,14 @@
-﻿using Google.Apis.Auth.OAuth2;
-using Google.Apis.Services;
-using Google.Apis.Sheets.v4;
-using Google.Apis.Sheets.v4.Data;
-using Google.Apis.Util.Store;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Linq;
 using NureSEConsultations.Bot.Model;
 using NureSEConsultations.Bot.Parser;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.ReplyMarkups;
 
 namespace NureSEConsultations.Bot
 {
@@ -27,18 +18,29 @@ namespace NureSEConsultations.Bot
 
         private static ITelegramBotClient botClient;
 
-        private const string CONSULTATION_SHEET_ID = "160pVT-z-OGnpgdlPQFwfJKmsXVb_N1C1NEBTZbcQOGo";
+        private const string CONSULTATION_SHEET_ID = "";
 
         private static Router router;
 
-        
+
         private static IServiceProvider ServicesConfiguration()
         {
             var builder = new ServiceCollection();
 
-            builder.AddSingleton<Consultation>();
+            var appsettings = JObject.Parse(System.IO.File.ReadAllText("appsettings.json"));
+            var repoConfig = new RepositoryConfiguration(
+                credentialsFile: "credentials.json",
+                tokensTempFile: "tokens.json",
+                googleSheetId: appsettings["GoogleSheetsId"].Value<string>(),
+                worksheetParserName: appsettings["ConsultationsParsers"].ToDictionary(
+                    j => (j as JProperty).Name, 
+                    j => (j as JProperty).Value<string>()));
+
+            builder.AddSingleton(repoConfig);
+            builder.AddSingleton<ConsultationRepository>();
+
+            builder.AddSingleton<IParserResolver, ParserResolver>();
             builder.AddSingleton(botClient);
-            builder.AddSingleton(new ConsultationRepository(CONSULTATION_SHEET_ID, null));
 
             // Add controllers
             Router.GetControllerClasses().ToList().ForEach(c => builder.AddSingleton(c));
