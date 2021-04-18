@@ -15,6 +15,8 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
+using Telegram.Bot.Args;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace NureSEConsultations.Bot
@@ -59,6 +61,8 @@ namespace NureSEConsultations.Bot
 
             botClient.OnMessage += OnMessageReceived;
             botClient.OnInlineQuery += OnInlineQuery;
+            botClient.OnInlineResultChosen += OnInlineResultChosen; ;
+            botClient.OnCallbackQuery += BotClient_OnCallbackQuery;
             botClient.StartReceiving();
 
             Console.WriteLine("Press ENTER to shut down.");
@@ -67,7 +71,28 @@ namespace NureSEConsultations.Bot
             botClient.StopReceiving();
         }
 
-        private static async void OnInlineQuery(object sender, Telegram.Bot.Args.InlineQueryEventArgs e)
+        private static async void BotClient_OnCallbackQuery(object sender, CallbackQueryEventArgs e)
+        {
+            var res = e.CallbackQuery;
+            if (e != null)
+            {
+                string route = res.Data.Substring(0, res.Data.IndexOf(' '));
+                await router.HandleAsync(route, res);
+            }
+            Console.WriteLine($"{res.From.FirstName} {res.From.LastName}: {res.Message} {res.Data}");
+        }
+
+        private static async void OnInlineResultChosen(object sender, ChosenInlineResultEventArgs e)
+        {
+            ChosenInlineResult res = e.ChosenInlineResult;
+            if (res != null)
+            {
+                await router.HandleAsync(res.Query, res);
+            }
+            Console.WriteLine($"{res.From.FirstName} {res.From.LastName}: {res.Query}");
+        }
+
+        private static async void OnInlineQuery(object sender, InlineQueryEventArgs e)
         {
             if (e.InlineQuery != null)
             {
@@ -76,7 +101,7 @@ namespace NureSEConsultations.Bot
             Console.WriteLine($"{e.InlineQuery.From.FirstName} {e.InlineQuery.From.LastName}: {e.InlineQuery.Query}");
         }
 
-        private static async void OnMessageReceived(object sender, Telegram.Bot.Args.MessageEventArgs e)
+        private static async void OnMessageReceived(object sender, MessageEventArgs e)
         {
             if (e.Message.Text != null)
             {
