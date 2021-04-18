@@ -27,42 +27,38 @@ namespace NureSEConsultations.Bot
 
         private const string CONSULTATION_SHEET_ID = "160pVT-z-OGnpgdlPQFwfJKmsXVb_N1C1NEBTZbcQOGo";
 
-        private static string[] consultationsTypes = {
-            "Зустрічі з куратором (весна)",
-            "1 курс, ПЗПІ-20",
-            "2 курс, ПЗПІ-19",
-            "3 курс, ПЗПІ-18",
-            "4 курс, ПЗПІ-17",
-            "1 курс магістри(5 курс)",
-        };
+        private static Router router;
 
-        private static IDictionary<string, IEnumerable<Consultation>> consultations;
-
-        private static ConsultationRepository consultationsRepository;
-
-        private static void ServicesConfiguration()
+        
+        private static IServiceProvider ServicesConfiguration()
         {
             var builder = new ServiceCollection();
 
             builder.AddSingleton<Consultation>();
+            builder.AddSingleton(botClient);
+            builder.AddSingleton(new ConsultationRepository(CONSULTATION_SHEET_ID, null));
 
-            services = builder.BuildServiceProvider(
-                new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = false}
+            // Add controllers
+            Router.GetControllerClasses().ToList().ForEach(c => builder.AddSingleton(c));
+
+            return builder.BuildServiceProvider(
+                new ServiceProviderOptions { ValidateOnBuild = true, ValidateScopes = false }
             );
         }
 
         public static async Task Main(string[] args)
         {
-            ServicesConfiguration();
-            //consultationsRepository = new ConsultationRepository(CONSULTATION_SHEET_ID, null);
-
-
             const string token = "1794463891:AAEtc5EU6CkaTxfBuofZBy7EUKGtj9y8G_o";
             botClient = new TelegramBotClient(token);
+
+            services = ServicesConfiguration();
+            router = new Router(services, "/меню");
+
             var me = await botClient.GetMeAsync();
             Console.WriteLine($"{me.FirstName} is running...");
 
             botClient.OnMessage += OnMessageReceived;
+            botClient.OnInlineQuery += OnInlineQuery;
             botClient.StartReceiving();
 
             Console.WriteLine("Press ENTER to shut down.");
@@ -71,43 +67,22 @@ namespace NureSEConsultations.Bot
             botClient.StopReceiving();
         }
 
+        private static async void OnInlineQuery(object sender, Telegram.Bot.Args.InlineQueryEventArgs e)
+        {
+            if (e.InlineQuery != null)
+            {
+                await router.HandleAsync(e.InlineQuery.Query, e.InlineQuery);
+            }
+            Console.WriteLine($"{e.InlineQuery.From.FirstName} {e.InlineQuery.From.LastName}: {e.InlineQuery.Query}");
+        }
+
         private static async void OnMessageReceived(object sender, Telegram.Bot.Args.MessageEventArgs e)
         {
             if (e.Message.Text != null)
             {
-                Console.WriteLine($"{e.Message.From.FirstName} {e.Message.From.LastName}: {e.Message.Text}");
-
-                if (e.Message.Text == "Список консультацій")
-                {
-                    var row = consultationsTypes.Select(type => new InlineKeyboardButton
-                    {
-                        Text = type,
-                        CallbackData = type + "callback"
-                    }).ToArray();
-
-                    await botClient.SendTextMessageAsync(
-                        chatId: e.Message.Chat,
-                        text: "Тримай ;)",
-                        replyMarkup: new InlineKeyboardMarkup(
-                            inlineKeyboardRow: row
-                        )
-                    );
-                }
-                else
-                {
-                    await botClient.SendTextMessageAsync(
-                      chatId: e.Message.Chat,
-                      text: "You said:\n" + e.Message.Text,
-                      replyMarkup: new ReplyKeyboardMarkup(
-                        keyboardRow: new KeyboardButton[]
-                        {
-                            new KeyboardButton("Список консультацій"),
-                            new KeyboardButton("Статистика"),
-                        }, resizeKeyboard: true)
-                    );
-                }
-
+                await router.HandleAsync(e.Message.Text, e.Message);
             }
+            Console.WriteLine($"{e.Message.From.FirstName} {e.Message.From.LastName}: {e.Message.Text}");
         }
     }
 }

@@ -30,6 +30,8 @@ namespace NureSEConsultations.Bot.Model
 
         public ConsultationRepository(string spreadsheetId, IDictionary<string, TableParser<Consultation>> parsers)
         {
+            return;
+
             const string credsPath = "tokens.json";
             using var credStream = new FileStream("credentials.json", FileMode.Open, FileAccess.Read);
             var creds = GoogleWebAuthorizationBroker.AuthorizeAsync(

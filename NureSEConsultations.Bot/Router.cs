@@ -34,10 +34,21 @@ namespace NureSEConsultations.Bot
 
         public Router(IServiceProvider services, string defaultCommand)
         {
-            var assembly = GetType().Assembly;
-            var controllers = assembly.GetTypes()
-                .Where(t => t.IsClass && t.Name.EndsWith("Controller"));
-            this.routesActions = controllers.SelectMany(controller => controller.GetMethods()
+            List<Route> a = FindRoutes();
+            this.routesActions = a;
+            this.services = services;
+            this.defaultCommand = defaultCommand;
+            if (!this.routesActions.Any(r => r.Command == defaultCommand))
+            {
+                throw new ArgumentException("No default handler found.", nameof(defaultCommand));
+            }
+        }
+
+        private static List<Route> FindRoutes()
+        {
+            IEnumerable<Type> controllers = GetControllerClasses();
+
+            return controllers.SelectMany(controller => controller.GetMethods()
                 .Where(m => Attribute.IsDefined(m, typeof(CommandAttribute)))
                 .Select(m =>
                 {
@@ -46,13 +57,14 @@ namespace NureSEConsultations.Bot
                 }))
                 .OrderByDescending(r => r.Command.Length)
                 .ToList();
+        }
 
-            this.services = services;
-            this.defaultCommand = defaultCommand;
-            if (!this.routesActions.Any(r => r.Command == defaultCommand))
-            {
-                throw new ArgumentException("No default handler found.", nameof(defaultCommand));
-            }
+        public static IEnumerable<Type> GetControllerClasses()
+        {
+            var assembly = typeof(Route).Assembly;
+            var controllers = assembly.GetTypes()
+                .Where(t => t.IsClass && t.Name.EndsWith("Controller"));
+            return controllers;
         }
 
         public async Task HandleAsync(string command, object param)
