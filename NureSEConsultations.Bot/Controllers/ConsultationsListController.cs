@@ -1,5 +1,7 @@
-﻿using System;
+﻿using NureSEConsultations.Bot.Model;
+using System;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -32,9 +34,12 @@ namespace NureSEConsultations.Bot.Controllers
 
         private readonly ITelegramBotClient botClient;
 
-        public ConsultationsListController(ITelegramBotClient botClient)
+        private readonly ConsultationRepository consultationRepository;
+
+        public ConsultationsListController(ITelegramBotClient botClient, ConsultationRepository consultationRepository)
         {
             this.botClient = botClient;
+            this.consultationRepository = consultationRepository;
         }
 
         [Command("/меню")]
@@ -89,9 +94,20 @@ namespace NureSEConsultations.Bot.Controllers
                 callbackQueryId: message.Id
             );
 
+            string consultationType = message.Data.Substring("list ".Length);
+            var consultations = consultationRepository.GetAllByType(consultationType).OrderBy(r => new Random().Next()).Take(10);
+
+            var sb = new StringBuilder($"Тримай {Emoji.SMIRK}");
+            foreach(var cons in consultations)
+            {
+                sb.AppendLine();
+                sb.Append($"<b>{cons.Subject}</b> {cons.Teacher} - {cons.Group} - {cons.Time}");
+            }
+
             await this.botClient.SendTextMessageAsync(
                 chatId: message.Message.Chat,
-                text: $"Тримай {Emoji.SMIRK}"
+                text: sb.ToString(),
+                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
             );
         }
     }

@@ -2,18 +2,23 @@
 
 namespace NureSEConsultations.Bot.Model
 {
+    public record WorksheetConfig(
+        string ParserType,
+        string TableRange
+    );
+
     public class RepositoryConfiguration
     {
         public RepositoryConfiguration(
             string googleSheetId, 
             string credentialsFile,
             string tokensTempFile,
-            IDictionary<string, string> worksheetParserName)
+            IDictionary<string, WorksheetConfig> worksheetConfig)
         {
             this.GoogleSheetId = googleSheetId;
             this.CredentialsFile = credentialsFile;
             this.TokensTempFile = tokensTempFile;
-            this.WorksheetParserName = worksheetParserName;
+            this.WorksheetConfig = worksheetConfig;
         }
 
         public string GoogleSheetId { get; set; }
@@ -22,6 +27,6 @@ namespace NureSEConsultations.Bot.Model
 
         public string TokensTempFile { get; }
 
-        public IDictionary<string, string> WorksheetParserName { get; set; }
+        public IDictionary<string, WorksheetConfig> WorksheetConfig { get; set; }
     }
 }

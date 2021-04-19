@@ -7,13 +7,18 @@ using NureSEConsultations.Bot.Parser;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 
 namespace NureSEConsultations.Bot.Model
 {
     public class ConsultationRepository
     {
-        private readonly IDictionary<string, IEnumerable<Consultation>> consultations;
+        private readonly IParserResolver parserResolver;
+
+        private readonly SheetsService sheets;
+
+        private readonly RepositoryConfiguration config;
 
         public ConsultationRepository(RepositoryConfiguration config, IParserResolver parserResolver)
         {
@@ -26,38 +31,34 @@ namespace NureSEConsultations.Bot.Model
                 dataStore: new FileDataStore(config.TokensTempFile, true)
             ).Result;
 
-            var sheets = new SheetsService(new BaseClientService.Initializer()
+            this.sheets = new SheetsService(new BaseClientService.Initializer()
             {
                 HttpClientInitializer = creds,
                 ApplicationName = nameof(NureSEConsultations)
             });
 
-            string range = "3 курс, ПЗПІ-18!A6:E";
-            SpreadsheetsResource.ValuesResource.GetRequest request =
-                    sheets.Spreadsheets.Values.Get(spreadsheetId, range);
-            ValueRange response = request.Execute();
-            IList<IList<object>> values = response.Values;
-            if (values != null && values.Count > 0)
-            {
-                TableParser<Consultation> tableParser;
-                tableParser = 
-                this.consultations = new Dictionary<string, IEnumerable<Consultation>>{
-                    { range, tableParser.ParseTable(values) }
-                };
-                foreach (var cons in this.consultations[range])
-                {
-                    Console.WriteLine($"{cons.Subject} - {cons.Teacher} - {cons.Group} - {cons.Time} - {cons.Link}");
-                }
-            }
-            else
-            {
-                Console.WriteLine("No data found.");
-            }
+            this.config = config;
+            this.parserResolver = parserResolver;
         }
 
         public IEnumerable<Consultation> GetAllByType(string type)
         {
-            return this.consultations[type];
+            string range = $"{type}!{this.config.WorksheetConfig[type].TableRange}";
+            SpreadsheetsResource.ValuesResource.GetRequest request =
+                this.sheets.Spreadsheets.Values.Get(this.config.GoogleSheetId,
+                range
+            );
+            ValueRange response = request.Execute();
+            IList<IList<object>> values = response.Values;
+            if (values != null)
+            {
+                TableParser<Consultation> tableParser = this.parserResolver.GetTableParserBySheetName(
+                    type, this.config.WorksheetConfig[type].ParserType
+                );
+                return tableParser.ParseTable(values);
+            }
+            return Enumerable.Empty<Consultation>();
         }
+
     }
 }

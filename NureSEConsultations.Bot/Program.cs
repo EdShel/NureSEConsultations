@@ -28,18 +28,20 @@ namespace NureSEConsultations.Bot
             var builder = new ServiceCollection();
 
             var appsettings = JObject.Parse(System.IO.File.ReadAllText("appsettings.json"));
+            var ws = appsettings["ConsultationsParsers"].ToDictionary(
+                k => (k as JProperty).Name,
+                v => (v as JProperty).Value.ToObject<WorksheetConfig>()        
+            );
             var repoConfig = new RepositoryConfiguration(
                 credentialsFile: "credentials.json",
                 tokensTempFile: "tokens.json",
-                googleSheetId: appsettings["GoogleSheetsId"].Value<string>(),
-                worksheetParserName: appsettings["ConsultationsParsers"].ToDictionary(
-                    j => (j as JProperty).Name, 
-                    j => (j as JProperty).Value<string>()));
+                googleSheetId: appsettings.Value<string>("GoogleSheetId"),
+                worksheetConfig: ws);
 
             builder.AddSingleton(repoConfig);
+            builder.AddSingleton<IParserResolver, ParserResolver>();
             builder.AddSingleton<ConsultationRepository>();
 
-            builder.AddSingleton<IParserResolver, ParserResolver>();
             builder.AddSingleton(botClient);
 
             // Add controllers
