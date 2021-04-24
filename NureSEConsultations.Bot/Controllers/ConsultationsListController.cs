@@ -1,7 +1,7 @@
-﻿using NureSEConsultations.Bot.Model;
+﻿using NureSEConsultations.Bot.Constants;
+using NureSEConsultations.Bot.Model;
 using System;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -9,18 +9,6 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace NureSEConsultations.Bot.Controllers
 {
-    public static class Routes
-    {
-        public const string CONSULTATIONS_LIST = "Список консультацій";
-
-        public const string STATISTICS = "Статистика";
-    }
-
-    public static class Emoji
-    {
-        public const string SMIRK = "\ud83d\ude0f";
-    }
-
     public class ConsultationsListController
     {
         private readonly ITelegramBotClient botClient;
@@ -60,7 +48,7 @@ namespace NureSEConsultations.Bot.Controllers
                     .Select(type => new InlineKeyboardButton
                     {
                         Text = type,
-                        CallbackData = "list " + type
+                        CallbackData = Routes.ForConcreteConsultation(type, 0)
                     }));
 
             await this.botClient.SendTextMessageAsync(
@@ -76,30 +64,6 @@ namespace NureSEConsultations.Bot.Controllers
             await this.botClient.SendTextMessageAsync(
                 chatId: message.Chat,
                 text: "NO"
-            );
-        }
-
-        [Command("list")]
-        public async Task ShowStatistics(CallbackQuery message)
-        {
-            await this.botClient.AnswerCallbackQueryAsync(
-                callbackQueryId: message.Id
-            );
-
-            string consultationType = message.Data.Substring("list ".Length);
-            var consultations = consultationRepository.GetAllByType(consultationType).OrderBy(r => new Random().Next()).Take(10);
-
-            var sb = new StringBuilder($"Тримай {Emoji.SMIRK}");
-            foreach(var cons in consultations)
-            {
-                sb.AppendLine();
-                sb.Append($"<b>{cons.Subject}</b> {cons.Teacher} - {cons.Group} - {cons.Time}");
-            }
-
-            await this.botClient.SendTextMessageAsync(
-                chatId: message.Message.Chat,
-                text: sb.ToString(),
-                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
             );
         }
     }
