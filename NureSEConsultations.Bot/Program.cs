@@ -39,6 +39,8 @@ namespace NureSEConsultations.Bot
             builder.AddSingleton<ConsultationRepository>();
             builder.AddSingleton<IConsultationRepository, CachingRepository>();
 
+            builder.AddSingleton(new DbContextFactory(appsettings.Value<string>("DatabaseConnectionString")));
+
             string telegramBotId = JObject.Parse(
                 System.IO.File.ReadAllText("credentials.json"))["TelegramBotId"].Value<string>();
             builder.AddSingleton<ITelegramBotClient>(new TelegramBotClient(telegramBotId));

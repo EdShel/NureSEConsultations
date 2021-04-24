@@ -13,5 +13,11 @@
         public const string NERD_FACE = "\ud83e\udd13";
 
         public const string ROBOT_FACE = "\ud83e\udd16";
+
+        public const string COUPLE = "\ud83d\udc6b";
+
+        public const string CHART_WITH_UPWARDS_TREND = "\ud83d\udcc8";
+
+        public const string CHART_WITH_DOWNWARDS_TREND = "\ud83d\udcc9";
     }
 }

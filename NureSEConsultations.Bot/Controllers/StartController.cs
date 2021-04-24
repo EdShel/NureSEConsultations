@@ -1,6 +1,8 @@
 ﻿using NureSEConsultations.Bot.Constants;
 using NureSEConsultations.Bot.Model;
+using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
@@ -17,15 +19,23 @@ namespace NureSEConsultations.Bot.Controllers
 
         private readonly RepositoryConfiguration repoConfig;
 
-        public StartController(ITelegramBotClient botClient, RepositoryConfiguration repositoryConfiguration)
+        private readonly DbContextFactory dbContextFactory;
+
+        public StartController(
+            ITelegramBotClient botClient,
+            RepositoryConfiguration repositoryConfiguration, 
+            DbContextFactory dbContextFactory)
         {
             this.botClient = botClient;
             this.repoConfig = repositoryConfiguration;
+            this.dbContextFactory = dbContextFactory;
         }
 
         [Command(Routes.START)]
         public async Task HandleNewUser(Message message)
         {
+            await RegisterNewUser(message);
+
             var stickerFileStream = new FileStream(Stickers.GREETINGS, FileMode.Open, FileAccess.Read);
             await this.botClient.SendStickerAsync(
                 message.Chat.Id,
@@ -47,10 +57,24 @@ namespace NureSEConsultations.Bot.Controllers
                     {
                         new KeyboardButton(Routes.CONSULTATIONS_LIST),
                         new KeyboardButton(Routes.STATISTICS),
-                    }, 
+                    },
                     resizeKeyboard: true
                 )
             );
+        }
+
+        private async Task RegisterNewUser(Message message)
+        {
+            var db = await this.dbContextFactory.CreateAsync();
+            if (!db.Users.Any(user => user.ChatId == message.Chat.Id))
+            {
+                db.Users.Add(new Model.User
+                {
+                    ChatId = message.Chat.Id,
+                    StartTime = DateTime.Now
+                });
+                await db.SaveChangesAsync();
+            }
         }
     }
 }

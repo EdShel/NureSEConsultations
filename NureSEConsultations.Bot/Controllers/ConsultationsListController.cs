@@ -57,14 +57,5 @@ namespace NureSEConsultations.Bot.Controllers
                 replyMarkup: new InlineKeyboardMarkup(rows)
             );
         }
-
-        [Command(Routes.STATISTICS)]
-        public async Task ShowStatistics(Message message)
-        {
-            await this.botClient.SendTextMessageAsync(
-                chatId: message.Chat,
-                text: "NO"
-            );
-        }
     }
 }

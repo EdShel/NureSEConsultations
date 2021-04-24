@@ -45,11 +45,11 @@ namespace NureSEConsultations.Bot.Parser
             return mapped.ToList();
         }
 
-        private IList<IList<T>> NormalizeCountOfColumns<T>(IList<IList<T>> table, T defaultValue)
+        private IList<IList<TCell>> NormalizeCountOfColumns<TCell>(IList<IList<TCell>> table, TCell defaultValue)
         {
             int maxColumnsCount = table.Max(row => row.Count);
             return table.Select(row =>
-                (IList<T>)row.Concat(Enumerable.Repeat(defaultValue, maxColumnsCount - row.Count))
+                (IList<TCell>)row.Concat(Enumerable.Repeat(defaultValue, maxColumnsCount - row.Count))
                     .ToList()
             ).ToList();
         }
