@@ -16,12 +16,7 @@ namespace NureSEConsultations.Bot
     {
         private static IServiceProvider services;
 
-        private static ITelegramBotClient botClient;
-
-        private const string CONSULTATION_SHEET_ID = "";
-
         private static Router router;
-
 
         private static IServiceProvider ServicesConfiguration()
         {
@@ -30,10 +25,10 @@ namespace NureSEConsultations.Bot
             var appsettings = JObject.Parse(System.IO.File.ReadAllText("appsettings.json"));
             var ws = appsettings["ConsultationsParsers"].ToDictionary(
                 k => (k as JProperty).Name,
-                v => (v as JProperty).Value.ToObject<WorksheetConfig>()        
+                v => (v as JProperty).Value.ToObject<WorksheetConfig>()
             );
             var repoConfig = new RepositoryConfiguration(
-                credentialsFile: "credentials.json",
+                credentialsFile: "googleCredentials.json",
                 tokensTempFile: "tokens.json",
                 googleSheetId: appsettings.Value<string>("GoogleSheetId"),
                 worksheetConfig: ws);
@@ -41,8 +36,11 @@ namespace NureSEConsultations.Bot
             builder.AddSingleton(repoConfig);
             builder.AddSingleton<IParserResolver, ParserResolver>();
             builder.AddSingleton<ConsultationRepository>();
+            builder.AddSingleton<IConsultationRepository, CachingRepository>();
 
-            builder.AddSingleton(botClient);
+            string telegramBotId = JObject.Parse(
+                System.IO.File.ReadAllText("credentials.json"))["TelegramBotId"].Value<string>();
+            builder.AddSingleton<ITelegramBotClient>(new TelegramBotClient(telegramBotId));
 
             // Add controllers
             Router.GetControllerClasses().ToList().ForEach(c => builder.AddSingleton(c));
@@ -54,10 +52,9 @@ namespace NureSEConsultations.Bot
 
         public static async Task Main(string[] args)
         {
-            const string token = "1794463891:AAEtc5EU6CkaTxfBuofZBy7EUKGtj9y8G_o";
-            botClient = new TelegramBotClient(token);
-
             services = ServicesConfiguration();
+            var botClient = services.GetRequiredService<ITelegramBotClient>();
+
             router = new Router(services, "/меню");
 
             var me = await botClient.GetMeAsync();

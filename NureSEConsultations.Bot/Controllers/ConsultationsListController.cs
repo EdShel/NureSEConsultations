@@ -23,20 +23,11 @@ namespace NureSEConsultations.Bot.Controllers
 
     public class ConsultationsListController
     {
-        private static string[] consultationsTypes = {
-            "Зустрічі з куратором (весна)",
-            "1 курс, ПЗПІ-20",
-            "2 курс, ПЗПІ-19",
-            "3 курс, ПЗПІ-18",
-            "4 курс, ПЗПІ-17",
-            "1 курс магістри(5 курс)",
-        };
-
         private readonly ITelegramBotClient botClient;
 
-        private readonly ConsultationRepository consultationRepository;
+        private readonly IConsultationRepository consultationRepository;
 
-        public ConsultationsListController(ITelegramBotClient botClient, ConsultationRepository consultationRepository)
+        public ConsultationsListController(ITelegramBotClient botClient, IConsultationRepository consultationRepository)
         {
             this.botClient = botClient;
             this.consultationRepository = consultationRepository;
@@ -60,9 +51,10 @@ namespace NureSEConsultations.Bot.Controllers
         [Command(Routes.CONSULTATIONS_LIST)]
         public async Task HandleConsultationsAsync(Message message)
         {
+            var consultationsNames = this.consultationRepository.GetConsultationsNames();
             const int buttonsInRow = 2;
-            var rows = Enumerable.Range(0, (int)Math.Ceiling(consultationsTypes.Length / 2d))
-                .Select(rowIndex => consultationsTypes
+            var rows = Enumerable.Range(0, (int)Math.Ceiling(consultationsNames.Count() / 2d))
+                .Select(rowIndex => consultationsNames
                     .Skip(rowIndex * buttonsInRow)
                     .Take(buttonsInRow)
                     .Select(type => new InlineKeyboardButton

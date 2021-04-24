@@ -4,7 +4,6 @@ using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
 using Google.Apis.Util.Store;
 using NureSEConsultations.Bot.Parser;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,7 +11,7 @@ using System.Threading;
 
 namespace NureSEConsultations.Bot.Model
 {
-    public class ConsultationRepository
+    public class ConsultationRepository : IConsultationRepository
     {
         private readonly IParserResolver parserResolver;
 
@@ -60,5 +59,9 @@ namespace NureSEConsultations.Bot.Model
             return Enumerable.Empty<Consultation>();
         }
 
+        public IEnumerable<string> GetConsultationsNames()
+        {
+            return this.config.WorksheetConfig.Keys.OrderBy(c => c);
+        }
     }
 }
