@@ -6,6 +6,8 @@ namespace NureSEConsultations.Bot.Constants
     {
         public const string START = "/start";
 
+        public const string DEFAULT = "/what";
+
         public const string CONSULTATIONS_LIST = "Список консультацій";
 
         public const string STATISTICS = "Статистика";

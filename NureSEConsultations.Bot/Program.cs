@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Linq;
+using NureSEConsultations.Bot.Constants;
 using NureSEConsultations.Bot.Model;
 using NureSEConsultations.Bot.Parser;
 using System;
@@ -55,7 +56,7 @@ namespace NureSEConsultations.Bot
             services = ServicesConfiguration();
             var botClient = services.GetRequiredService<ITelegramBotClient>();
 
-            router = new Router(services, "/меню");
+            router = new Router(services, Routes.DEFAULT);
 
             var me = await botClient.GetMeAsync();
             Console.WriteLine($"{me.FirstName} is running...");
