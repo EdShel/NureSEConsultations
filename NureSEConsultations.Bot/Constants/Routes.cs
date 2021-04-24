@@ -4,6 +4,8 @@ namespace NureSEConsultations.Bot.Constants
 {
     public static class Routes
     {
+        public const string START = "/start";
+
         public const string CONSULTATIONS_LIST = "Список консультацій";
 
         public const string STATISTICS = "Статистика";

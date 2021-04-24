@@ -11,5 +11,7 @@
         public const string HASH = "#\ufe0f\u20e3";
 
         public const string NERD_FACE = "\ud83e\udd13";
+
+        public const string ROBOT_FACE = "\ud83e\udd16";
     }
 }

@@ -57,18 +57,12 @@ namespace NureSEConsultations.Bot.Controllers
             {
                 keyboardButtons.Add(GetPreviousPageButton(consultationType, pageIndex));
             }
-            else
-            {
-                keyboardButtons.Add(GetAllPagesButton(consultationType, pagesCount));
-            }
+
+            keyboardButtons.Add(GetAllPagesButton(consultationType, pagesCount));
+
             if (pageIndex < pagesCount - 1)
             {
                 keyboardButtons.Add(GetNextPageButton(consultationType, pageIndex));
-            }
-            // Additional 'if' here to prevent two page buttons if the page is only one
-            else if (keyboardButtons.Count == 1)
-            {
-                keyboardButtons.Add(GetAllPagesButton(consultationType, pagesCount));
             }
 
             return keyboardButtons;
