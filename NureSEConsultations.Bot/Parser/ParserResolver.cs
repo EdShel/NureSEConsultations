@@ -5,7 +5,7 @@ namespace NureSEConsultations.Bot.Parser
 {
     public class ParserResolver : IParserResolver
     {
-        public TableParser<Consultation> GetTableParserBySheetName(string name, string parserType)
+        public TableParser<Consultation> GetTableParserByType(string parserType)
         {
             return parserType switch
             {

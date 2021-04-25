@@ -51,8 +51,8 @@ namespace NureSEConsultations.Bot.Model
             IList<IList<object>> values = response.Values;
             if (values != null)
             {
-                TableParser<Consultation> tableParser = this.parserResolver.GetTableParserBySheetName(
-                    type, this.config.WorksheetConfig[type].ParserType
+                TableParser<Consultation> tableParser = this.parserResolver.GetTableParserByType(
+                    this.config.WorksheetConfig[type].ParserType
                 );
                 return tableParser.ParseTable(values);
             }

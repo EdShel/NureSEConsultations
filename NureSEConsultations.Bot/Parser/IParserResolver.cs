@@ -4,6 +4,6 @@ namespace NureSEConsultations.Bot.Parser
 {
     public interface IParserResolver
     {
-        TableParser<Consultation> GetTableParserBySheetName(string name, string parserType);
+        TableParser<Consultation> GetTableParserByType(string parserType);
     }
 }

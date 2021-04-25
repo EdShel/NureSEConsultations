@@ -45,6 +45,7 @@ namespace NureSEConsultations.Bot.Controllers
                 chatId: message.Message.Chat,
                 text: messageText,
                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
+                disableWebPagePreview: true,
                 replyMarkup: new InlineKeyboardMarkup(keyboardButtons)
             );
 
