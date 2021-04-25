@@ -38,15 +38,18 @@ namespace NureSEConsultations.Bot.Controllers
             int pagesCount = (int)Math.Ceiling((double)consultationsCount / pageSize);
             var pageContent = allConsultations.Skip(pageIndex * pageSize).Take(pageSize);
 
-            string messageText = GetTextMessage(pageContent);
-
             var keyboardButtons = GetPagesSwitcher(consultationType, pageIndex, pagesCount);
+            string messageText = GetTextMessage(pageContent);
 
             await this.botClient.SendTextMessageAsync(
                 chatId: message.Message.Chat,
                 text: messageText,
                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
                 replyMarkup: new InlineKeyboardMarkup(keyboardButtons)
+            );
+
+            await this.botClient.DeleteMessageAsync(
+                message.Message.Chat.Id, message.Message.MessageId
             );
         }
 

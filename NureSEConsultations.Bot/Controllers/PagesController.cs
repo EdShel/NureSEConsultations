@@ -35,6 +35,10 @@ namespace NureSEConsultations.Bot.Controllers
                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
                 replyMarkup: new InlineKeyboardMarkup(buttons)
             );
+
+            await this.botClient.DeleteMessageAsync(
+                message.Message.Chat.Id, message.Message.MessageId
+            );
         }
 
         private static IEnumerable<IEnumerable<InlineKeyboardButton>> GetPageButtons(
@@ -49,6 +53,5 @@ namespace NureSEConsultations.Bot.Controllers
                     CallbackData = Routes.ForConcreteConsultation(consultationType, pageNumber - 1)
                 })).ToList();
         }
-
     }
 }

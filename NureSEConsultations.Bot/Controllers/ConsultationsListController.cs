@@ -21,21 +21,6 @@ namespace NureSEConsultations.Bot.Controllers
             this.consultationRepository = consultationRepository;
         }
 
-        [Command("/меню")]
-        public async Task HandleMenu(Message message)
-        {
-            await this.botClient.SendTextMessageAsync(
-                chatId: message.Chat,
-                text: "You said:\n" + message.Text,
-                replyMarkup: new ReplyKeyboardMarkup(
-                keyboardRow: new KeyboardButton[]
-                {
-                    new KeyboardButton(Routes.CONSULTATIONS_LIST),
-                    new KeyboardButton(Routes.STATISTICS),
-                }, resizeKeyboard: true)
-            );
-        }
-
         [Command(Routes.CONSULTATIONS_LIST)]
         public async Task HandleConsultationsAsync(Message message)
         {
