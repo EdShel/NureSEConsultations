@@ -45,6 +45,12 @@ namespace NureSEConsultations.Bot.Controllers
                 return;
             }
 
+            var hearMessage = await this.botClient.SendTextMessageAsync(
+                chatId: message.Chat.Id,
+                text: $"{Emoji.HEAR_NO_EVIL} намагаюся розчути, зачекай.",
+                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+            );
+
             string voiceId = message.Voice.FileId;
             var voiceFileInfo = await this.botClient.GetFileAsync(voiceId);
             using var ogg = new MemoryStream(voiceFileInfo.FileSize);
@@ -59,16 +65,18 @@ namespace NureSEConsultations.Bot.Controllers
 
             if (string.IsNullOrWhiteSpace(voiceText))
             {
-                await this.botClient.SendTextMessageAsync(
+                await this.botClient.EditMessageTextAsync(
                     chatId: message.Chat.Id,
+                    messageId: hearMessage.MessageId,
                     text: $"{Emoji.HEAR_NO_EVIL} Нічого не почув.",
                     parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
                 );
                 return;
             }
 
-            await this.botClient.SendTextMessageAsync(
+            await this.botClient.EditMessageTextAsync(
                 chatId: message.Chat.Id,
+                messageId: hearMessage.MessageId,
                 text: $"{Emoji.EAR} Я почув <b>{voiceText}.</b>",
                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
             );

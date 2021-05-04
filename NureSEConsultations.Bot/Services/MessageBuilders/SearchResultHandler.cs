@@ -113,7 +113,7 @@ namespace NureSEConsultations.Bot.Services.MessageBuilders
 
         private string GetTextMessage(IPaginatedMessageBuilder builder)
         {
-            var sb = new StringBuilder($"Ось, що я знайшов {Emoji.MAG_RIGHT}");
+            var sb = new StringBuilder($"Ось, що знайшов {Emoji.MAG_RIGHT}");
             builder.AppendMessage(sb);
             return sb.ToString();
         }
