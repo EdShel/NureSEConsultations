@@ -45,11 +45,12 @@ namespace NureSEConsultations.Bot.Controllers
             await this.botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 text: $"Привіт! Я бот {Emoji.ROBOT_FACE} для інформування <b>щодо консультацій кафедри ПІ.</b>\n" +
-                "Я вмію відображати консультації потоків та зустрічей з кураторами.\n" +
-                "Звідки я беру інформацію? " +
-                "\n<a href=\"https://docs.google.com/spreadsheets/d/" + this.repoConfig.GoogleSheetId +
-                "\">З онлайн таблиці консультацій кафедри.</a>\n" +
-                $"А також я вмію в статистику {Emoji.NERD_FACE}",
+                      $"Я вмію відображати консультації потоків та зустрічей з кураторами.\n" +
+                      $"Звідки я беру інформацію? " +
+                      $"\n<a href=\"https://docs.google.com/spreadsheets/d/" + this.repoConfig.GoogleSheetId +
+                      $"\">З онлайн таблиці консультацій кафедри.</a>\n" +
+                      $"Іще можу шукати консультації по тексту {Emoji.WRITING_HAND} та голосу {Emoji.EAR}\n" +
+                      $"А також я вмію в статистику {Emoji.NERD_FACE}",
                 parseMode: ParseMode.Html,
                 disableWebPagePreview: true,
                 replyMarkup: new ReplyKeyboardMarkup(

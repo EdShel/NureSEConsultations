@@ -27,5 +27,7 @@
         public const string SCREAM_CAT = "\ud83d\ude40";
 
         public const string EAR = "\ud83d\udc42";
+
+        public const string WRITING_HAND = "\u270d\ufe0f";
     }
 }
