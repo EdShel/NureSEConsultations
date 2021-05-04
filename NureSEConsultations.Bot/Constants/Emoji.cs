@@ -25,5 +25,7 @@
         public const string MAG_RIGHT = "\ud83d\udd0e";
 
         public const string SCREAM_CAT = "\ud83d\ude40";
+
+        public const string EAR = "\ud83d\udc42";
     }
 }

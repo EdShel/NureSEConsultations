@@ -1,5 +1,6 @@
 ﻿using NureSEConsultations.Bot.Constants;
 using NureSEConsultations.Bot.Services;
+using NureSEConsultations.Bot.Services.MessageBuilders;
 using System.IO;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -17,11 +18,18 @@ namespace NureSEConsultations.Bot.Controllers
 
         private readonly ISpeechTranscriptor speechTranscriptor;
 
-        public VoiceSearchController(ITelegramBotClient botClient, IOggToWavConverter oggToWavConverter, ISpeechTranscriptor speechTranscriptor)
+        private readonly SearchResultHandler searchHandler;
+
+        public VoiceSearchController(
+            ITelegramBotClient botClient,
+            IOggToWavConverter oggToWavConverter,
+            ISpeechTranscriptor speechTranscriptor,
+            SearchResultHandler searchHandler)
         {
             this.botClient = botClient;
             this.oggToWavConverter = oggToWavConverter;
             this.speechTranscriptor = speechTranscriptor;
+            this.searchHandler = searchHandler;
         }
 
         [Command(Routes.VOICE_SEARCH)]
@@ -51,7 +59,14 @@ namespace NureSEConsultations.Bot.Controllers
 
             await this.botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                text: voiceText
+                text: $"{Emoji.EAR} Я почув <b>{voiceText}.</b>",
+                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+            );
+
+            await this.searchHandler.HandleSearchAsync(
+                chatId: message.Chat.Id,
+                searchQuery: voiceText,
+                pageIndex: 0
             );
         }
     }
