@@ -49,6 +49,8 @@ namespace NureSEConsultations.Bot
             builder.AddSingleton<ConsultationPageMessageBuilderFactory>();
             builder.AddSingleton<SearchResultMessageBuilderFactory>();
             builder.AddSingleton<PagesListGenerator>();
+            builder.AddSingleton<SearchQueryNormalizer>();
+            builder.AddSingleton<SearchResultHandler>();
 
             string telegramBotId = JObject.Parse(
                 System.IO.File.ReadAllText("credentials.json"))["TelegramBotId"].Value<string>();

@@ -23,5 +23,7 @@
         public const string HEAR_NO_EVIL = "\ud83d\ude49";
 
         public const string MAG_RIGHT = "\ud83d\udd0e";
+
+        public const string SCREAM_CAT = "\ud83d\ude40";
     }
 }

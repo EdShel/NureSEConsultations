@@ -1,13 +1,9 @@
 ﻿using NureSEConsultations.Bot.Constants;
 using NureSEConsultations.Bot.Services;
 using NureSEConsultations.Bot.Services.MessageBuilders;
-using System;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.ReplyMarkups;
 
 namespace NureSEConsultations.Bot.Controllers
 {
@@ -15,21 +11,18 @@ namespace NureSEConsultations.Bot.Controllers
     {
         private readonly ITelegramBotClient botClient;
 
-        private readonly IConsultationSearcher searcher;
-
-        private readonly SearchResultMessageBuilderFactory messageBuilderFactory;
+        private readonly SearchResultHandler searchHandler;
 
         private int stickerCounter;
 
-        public DefaultController(ITelegramBotClient botClient, IConsultationSearcher searcher, SearchResultMessageBuilderFactory messageBuilderFactory)
+        public DefaultController(ITelegramBotClient botClient, SearchResultHandler searchHandler)
         {
             this.botClient = botClient;
-            this.searcher = searcher;
-            this.messageBuilderFactory = messageBuilderFactory;
+            this.searchHandler = searchHandler;
         }
 
         [Command(Routes.DEFAULT)]
-        public async Task HandleNewUser(Message message)
+        public Task HandleNewUser(Message message)
         {
             //// Actually, race conditions does not matter 
             //string stickerName = this.stickerCounter++ % 2 == 0
@@ -43,33 +36,10 @@ namespace NureSEConsultations.Bot.Controllers
 
             string searchQuery = message.Text;
 
-            const int pageSize = 10;
-            const int pageIndex = 0;
-            var allFoundItems = this.searcher.Search(searchQuery);
-            int pagesCount = (int)Math.Ceiling((double)allFoundItems.Count() / pageSize);
-            var currentPage = allFoundItems
-                .Skip(pageIndex * pageSize)
-                .Take(pageSize);
-
-            var messageBuilder = this.messageBuilderFactory.Create(searchQuery, currentPage, pageIndex, pagesCount);
-
-            var text = GetTextMessage(messageBuilder);
-            var keyboard = messageBuilder.GetPagesSwitcher();
-
-            await this.botClient.SendTextMessageAsync(
+            return this.searchHandler.HandleSearchAsync(
                 chatId: message.Chat.Id,
-                text: text,
-                parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
-                disableWebPagePreview: true,
-                replyMarkup: new InlineKeyboardMarkup(keyboard)
-            );
-        }
-
-        private string GetTextMessage(IPaginatedMessageBuilder builder)
-        {
-            var sb = new StringBuilder($"Ось, що я знайшов {Emoji.MAG_RIGHT}");
-            builder.AppendMessage(sb);
-            return sb.ToString();
+                searchQuery: searchQuery,
+                pageIndex: 0);
         }
     }
 }
