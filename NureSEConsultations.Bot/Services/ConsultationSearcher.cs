@@ -38,7 +38,6 @@ namespace NureSEConsultations.Bot.Services
             {
                 BuildSearchIndices();
                 this.lastIndexRebuildTime = DateTime.Now;
-                Console.WriteLine("Build");
             }
 
             using var indexSearcher = new IndexSearcher(this.searchIndexesDirectory);
