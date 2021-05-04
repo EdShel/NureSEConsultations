@@ -13,8 +13,6 @@ namespace NureSEConsultations.Bot.Controllers
 
         private readonly SearchResultHandler searchHandler;
 
-        private int stickerCounter;
-
         public DefaultController(ITelegramBotClient botClient, SearchResultHandler searchHandler)
         {
             this.botClient = botClient;
@@ -24,16 +22,6 @@ namespace NureSEConsultations.Bot.Controllers
         [Command(Routes.DEFAULT)]
         public Task HandleNewUser(Message message)
         {
-            //// Actually, race conditions does not matter 
-            //string stickerName = this.stickerCounter++ % 2 == 0
-            //    ? Stickers.DO_NOT_UNDERSTAND0
-            //    : Stickers.DO_NOT_UNDERSTAND1;
-            //var stickerFileStream = new FileStream(stickerName, FileMode.Open, FileAccess.Read);
-            //await this.botClient.SendStickerAsync(
-            //    message.Chat.Id,
-            //    new InputOnlineFile(stickerFileStream)
-            //);
-
             string searchQuery = message.Text;
 
             return this.searchHandler.HandleSearchAsync(

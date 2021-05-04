@@ -57,6 +57,16 @@ namespace NureSEConsultations.Bot.Controllers
 
             string voiceText = await this.speechTranscriptor.TranscriptAsync(wav);
 
+            if (string.IsNullOrWhiteSpace(voiceText))
+            {
+                await this.botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: $"{Emoji.HEAR_NO_EVIL} Нічого не почув.",
+                    parseMode: Telegram.Bot.Types.Enums.ParseMode.Html
+                );
+                return;
+            }
+
             await this.botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
                 text: $"{Emoji.EAR} Я почув <b>{voiceText}.</b>",

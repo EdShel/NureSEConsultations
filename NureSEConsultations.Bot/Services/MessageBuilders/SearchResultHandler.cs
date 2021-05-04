@@ -2,10 +2,12 @@
 using NureSEConsultations.Bot.Model;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot;
+using Telegram.Bot.Types.InputFiles;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace NureSEConsultations.Bot.Services.MessageBuilders
@@ -22,6 +24,8 @@ namespace NureSEConsultations.Bot.Services.MessageBuilders
 
         private readonly SearchQueryNormalizer searchQueryNormalizer;
 
+        private int stickerCounter;
+
         public SearchResultHandler(
             ITelegramBotClient botClient,
             IConsultationSearcher searcher,
@@ -36,11 +40,17 @@ namespace NureSEConsultations.Bot.Services.MessageBuilders
 
         public async Task HandleSearchAsync(long chatId, string searchQuery, int pageIndex)
         {
-            var normalizedQuery = searchQueryNormalizer.NormalizeStrict(searchQuery); 
+            var normalizedQuery = this.searchQueryNormalizer.NormalizeStrict(searchQuery);
+            if (string.IsNullOrWhiteSpace(normalizedQuery))
+            {
+                await HandleUglySearch(chatId);
+                return;
+            }
+
             var allFoundItems = this.searcher.Search(normalizedQuery);
             if (!allFoundItems.Any())
             {
-                normalizedQuery = searchQueryNormalizer.NormalizeFuzzy(normalizedQuery);
+                normalizedQuery = this.searchQueryNormalizer.NormalizeFuzzy(normalizedQuery);
                 allFoundItems = this.searcher.Search(normalizedQuery);
             }
 
@@ -51,6 +61,19 @@ namespace NureSEConsultations.Bot.Services.MessageBuilders
             }
 
             await HandleFoundSearchResults(chatId, searchQuery, pageIndex, allFoundItems);
+        }
+
+        private async Task HandleUglySearch(long chatId)
+        {
+            // Actually, race conditions does not matter 
+            string stickerName = this.stickerCounter++ % 2 == 0
+                ? Stickers.DO_NOT_UNDERSTAND0
+                : Stickers.DO_NOT_UNDERSTAND1;
+            var stickerFileStream = new FileStream(stickerName, FileMode.Open, FileAccess.Read);
+            await this.botClient.SendStickerAsync(
+                chatId: chatId,
+                sticker: new InputOnlineFile(stickerFileStream)
+            );
         }
 
         private async Task HandleEmptySearchResult(long chatId, string searchQuery)

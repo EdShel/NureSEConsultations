@@ -29,7 +29,7 @@ namespace NureSEConsultations.Bot.Controllers
             Routes.ParseForSearchPages(message.Data, out string searchQuery, out int pagesCount);
 
             var textMessage = $"Для <i>{searchQuery}</i> знайшов {pagesCount} сторінок {Emoji.NERD_FACE}";
-            var buttons = pagesListGenerator.GetPageButtons(
+            var buttons = this.pagesListGenerator.GetPageButtons(
                 pagesCount: pagesCount,
                 routeForPage: pageIndex => Routes.ForSearchResult(searchQuery, pageIndex));
 

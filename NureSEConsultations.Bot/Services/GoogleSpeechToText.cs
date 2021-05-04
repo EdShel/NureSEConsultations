@@ -30,9 +30,9 @@ namespace NureSEConsultations.Bot.Services
                 LanguageCode = LANGUAGE
             };
             var response = await client.RecognizeAsync(config, audio);
-            var alternative = response.Results.First().Alternatives.First();
+            var alternative = response.Results.FirstOrDefault()?.Alternatives.FirstOrDefault();
 
-            return alternative.Transcript;
+            return alternative?.Transcript ?? string.Empty;
         }
     }
 }
