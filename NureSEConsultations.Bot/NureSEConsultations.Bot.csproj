@@ -14,6 +14,7 @@
     <PackageReference Include="Concentus.OggFile" Version="1.0.4" />
     <PackageReference Include="Google.Apis.Sheets.v4" Version="1.51.0.2272" />
     <PackageReference Include="Google.Cloud.Speech.V1" Version="2.1.0" />
+    <PackageReference Include="Lucene.Net" Version="3.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.5" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.1" />
     <PackageReference Include="NAudio" Version="2.0.0" />

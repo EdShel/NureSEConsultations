@@ -45,6 +45,7 @@ namespace NureSEConsultations.Bot
             builder.AddSingleton<ITempFileProvider>(new LocalDirTempFileProvider(tempFolderPath));
             builder.AddSingleton<IOggToWavConverter, OggToWavConverter>();
             builder.AddSingleton<ISpeechTranscriptor, GoogleSpeechToText>();
+            builder.AddSingleton<IConsultationSearcher, ConsultationSearcher>();
 
             string telegramBotId = JObject.Parse(
                 System.IO.File.ReadAllText("credentials.json"))["TelegramBotId"].Value<string>();
