@@ -1,8 +1,8 @@
 ﻿using NAudio.Wave;
 using NureSEConsultations.Bot.Constants;
 using NureSEConsultations.Bot.Model;
+using NureSEConsultations.Bot.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,10 +18,16 @@ namespace NureSEConsultations.Bot.Controllers
 
         private readonly IConsultationRepository consultationRepository;
 
-        public ConsultationController(ITelegramBotClient botClient, IConsultationRepository consultationRepository)
+        private readonly ConsultationPageMessageBuilderFactory messageBuilderFactory;
+
+        public ConsultationController(
+            ITelegramBotClient botClient,
+            IConsultationRepository consultationRepository,
+            ConsultationPageMessageBuilderFactory messageBuilderFactory)
         {
             this.botClient = botClient;
             this.consultationRepository = consultationRepository;
+            this.messageBuilderFactory = messageBuilderFactory;
         }
 
         [Command(Routes.CONCRETE_CONSULTATION)]
@@ -39,15 +45,21 @@ namespace NureSEConsultations.Bot.Controllers
             int pagesCount = (int)Math.Ceiling((double)consultationsCount / pageSize);
             var pageContent = allConsultations.Skip(pageIndex * pageSize).Take(pageSize);
 
-            var keyboardButtons = GetPagesSwitcher(consultationType, pageIndex, pagesCount);
-            string messageText = GetTextMessage(pageContent);
+            var messageBuilder = this.messageBuilderFactory.Create(
+                consultationType: consultationType,
+                consultations: pageContent,
+                pageIndex: pageIndex,
+                pagesCount: pagesCount);
+
+            var text = GetTextMessage(messageBuilder);
+            var keyboard = messageBuilder.GetPagesSwitcher();
 
             await this.botClient.SendTextMessageAsync(
                 chatId: message.Message.Chat,
-                text: messageText,
+                text: text,
                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
                 disableWebPagePreview: true,
-                replyMarkup: new InlineKeyboardMarkup(keyboardButtons)
+                replyMarkup: new InlineKeyboardMarkup(keyboard)
             );
 
             await this.botClient.DeleteMessageAsync(
@@ -55,61 +67,11 @@ namespace NureSEConsultations.Bot.Controllers
             );
         }
 
-        private static List<InlineKeyboardButton> GetPagesSwitcher(string consultationType, int pageIndex, int pagesCount)
-        {
-            var keyboardButtons = new List<InlineKeyboardButton>();
-            if (pageIndex != 0)
-            {
-                keyboardButtons.Add(GetPreviousPageButton(consultationType, pageIndex));
-            }
-
-            keyboardButtons.Add(GetAllPagesButton(consultationType, pagesCount));
-
-            if (pageIndex < pagesCount - 1)
-            {
-                keyboardButtons.Add(GetNextPageButton(consultationType, pageIndex));
-            }
-
-            return keyboardButtons;
-        }
-
-        private static InlineKeyboardButton GetPreviousPageButton(string consultationType, int pageIndex)
-        {
-            return new InlineKeyboardButton
-            {
-                Text = $"{Emoji.ARROW_BACKWARD} {pageIndex}",
-                CallbackData = Routes.ForConcreteConsultation(consultationType, pageIndex - 1)
-            };
-        }
-
-        private static InlineKeyboardButton GetNextPageButton(string consultationType, int pageIndex)
-        {
-            return new InlineKeyboardButton
-            {
-                Text = $"{pageIndex + 2} {Emoji.ARROW_FORWARD}",
-                CallbackData = Routes.ForConcreteConsultation(consultationType, pageIndex + 1)
-            };
-        }
-
-        private static InlineKeyboardButton GetAllPagesButton(string consultationType, int pagesCount)
-        {
-            return new InlineKeyboardButton
-            {
-                Text = $"{Emoji.HASH} Усі сторінки",
-                CallbackData = Routes.RouteForPages(consultationType, pagesCount)
-            };
-        }
-
-        private static string GetTextMessage(IEnumerable<Consultation> pageContent)
+        private static string GetTextMessage(IPaginatedMessageBuilder messageBuilder)
         {
             var sb = new StringBuilder($"Тримай {Emoji.SMIRK}");
-            foreach (var cons in pageContent)
-            {
-                sb.AppendLine();
-                sb.Append($"<b>{cons.Subject}</b> <i>{cons.Teacher}</i> <u>{cons.Group}</u> <b>{cons.Time}</b>");
-            }
-            string messageText = sb.ToString();
-            return messageText;
+            messageBuilder.AppendMessage(sb);
+            return sb.ToString();
         }
     }
 }
