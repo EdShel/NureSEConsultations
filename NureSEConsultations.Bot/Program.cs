@@ -40,7 +40,11 @@ namespace NureSEConsultations.Bot
             builder.AddSingleton<IConsultationRepository, CachingRepository>();
 
             builder.AddSingleton(new DbContextFactory(appsettings.Value<string>("DatabaseConnectionString")));
-            builder.AddSingleton<ITempFileProvider>(new LocalDirTempFileProvider(appsettings.Value<string>("VoiceTempFolder")));
+
+            string tempFolderPath = appsettings.Value<string>("VoiceTempFolder");
+            builder.AddSingleton<ITempFileProvider>(new LocalDirTempFileProvider(tempFolderPath));
+            builder.AddSingleton<IOggToWavConverter, OggToWavConverter>();
+            builder.AddSingleton<ISpeechTranscriptor, GoogleSpeechToText>();
 
             string telegramBotId = JObject.Parse(
                 System.IO.File.ReadAllText("credentials.json"))["TelegramBotId"].Value<string>();

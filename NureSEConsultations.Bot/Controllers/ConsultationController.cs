@@ -10,9 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.InputFiles;
 using Telegram.Bot.Types.ReplyMarkups;
-using File = System.IO.File;
 
 namespace NureSEConsultations.Bot.Controllers
 {
@@ -22,15 +20,15 @@ namespace NureSEConsultations.Bot.Controllers
 
         private readonly ITelegramBotClient botClient;
 
-        private readonly IConsultationRepository consultationRepository;
+        private readonly IOggToWavConverter oggToWavConverter;
 
-        private readonly ITempFileProvider tempFileProvider;
+        private readonly ISpeechTranscriptor speechTranscriptor;
 
-        public VoiceSearchController(ITelegramBotClient botClient, IConsultationRepository consultationRepository, ITempFileProvider tempFileProvider)
+        public VoiceSearchController(ITelegramBotClient botClient, IOggToWavConverter oggToWavConverter, ISpeechTranscriptor speechTranscriptor)
         {
             this.botClient = botClient;
-            this.consultationRepository = consultationRepository;
-            this.tempFileProvider = tempFileProvider;
+            this.oggToWavConverter = oggToWavConverter;
+            this.speechTranscriptor = speechTranscriptor;
         }
 
         [Command(Routes.VOICE_SEARCH)]
@@ -50,21 +48,17 @@ namespace NureSEConsultations.Bot.Controllers
             var voiceFileInfo = await this.botClient.GetFileAsync(voiceId);
             using var ogg = new MemoryStream(voiceFileInfo.FileSize);
             await this.botClient.DownloadFileAsync(voiceFileInfo.FilePath, ogg);
-
-            var oggFilePath = Path.Combine(@"C:\Users\Admin\Desktop\Audio", Guid.NewGuid() + ".ogg");
-            File.WriteAllBytes(oggFilePath, ogg.ToArray());
+            ogg.Position = 0;
 
             using var wav = new MemoryStream();
-            ogg.Position = 0;
-            new OggToWavConverter().Convert(ogg, wav);
-
-            var filePathOnDisk = Path.Combine(@"C:\Users\Admin\Desktop\Audio", Guid.NewGuid() + ".wav");
-            await File.WriteAllBytesAsync(filePathOnDisk, wav.ToArray());
-
+            this.oggToWavConverter.Convert(ogg, wav);
             wav.Position = 0;
-            await botClient.SendVoiceAsync(
+
+            string voiceText = await this.speechTranscriptor.TranscriptAsync(wav);
+
+            await this.botClient.SendTextMessageAsync(
                 chatId: message.Chat.Id,
-                voice: new InputOnlineFile(wav)
+                text: voiceText
             );
         }
     }
