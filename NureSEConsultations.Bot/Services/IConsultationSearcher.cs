@@ -47,18 +47,20 @@ namespace NureSEConsultations.Bot.Services
             var query = queryParser.Parse(text);
             var hits = indexSearcher.Search(query, MAX_RESULTS);
 
+            var consultations = new List<Consultation>(hits.TotalHits);
             foreach (var scoreDoc in hits.ScoreDocs)
             {
                 Document d = indexSearcher.Doc(scoreDoc.Doc);
-                yield return new Consultation
+                consultations.Add(new Consultation
                 {
                     Group = d.Get(nameof(Consultation.Group)),
                     Link = d.Get(nameof(Consultation.Link)),
                     Subject = d.Get(nameof(Consultation.Subject)),
                     Teacher = d.Get(nameof(Consultation.Teacher)),
                     Time = d.Get(nameof(Consultation.Time))
-                };
+                });
             }
+            return consultations;
         }
 
         private void BuildSearchIndices()

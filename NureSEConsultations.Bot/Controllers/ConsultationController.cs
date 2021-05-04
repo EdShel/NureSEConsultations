@@ -1,7 +1,7 @@
 ﻿using NAudio.Wave;
 using NureSEConsultations.Bot.Constants;
 using NureSEConsultations.Bot.Model;
-using NureSEConsultations.Bot.Services;
+using NureSEConsultations.Bot.Services.MessageBuilders;
 using System;
 using System.Linq;
 using System.Text;
@@ -41,8 +41,7 @@ namespace NureSEConsultations.Bot.Controllers
 
             const int pageSize = 10;
             var allConsultations = this.consultationRepository.GetAllByType(consultationType);
-            int consultationsCount = allConsultations.Count();
-            int pagesCount = (int)Math.Ceiling((double)consultationsCount / pageSize);
+            int pagesCount = (int)Math.Ceiling((double)allConsultations.Count() / pageSize);
             var pageContent = allConsultations.Skip(pageIndex * pageSize).Take(pageSize);
 
             var messageBuilder = this.messageBuilderFactory.Create(

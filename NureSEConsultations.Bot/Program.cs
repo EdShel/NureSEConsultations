@@ -4,6 +4,7 @@ using NureSEConsultations.Bot.Constants;
 using NureSEConsultations.Bot.Model;
 using NureSEConsultations.Bot.Parser;
 using NureSEConsultations.Bot.Services;
+using NureSEConsultations.Bot.Services.MessageBuilders;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -46,6 +47,8 @@ namespace NureSEConsultations.Bot
             builder.AddSingleton<ISpeechTranscriptor, GoogleSpeechToText>();
             builder.AddSingleton<IConsultationSearcher, ConsultationSearcher>();
             builder.AddSingleton<ConsultationPageMessageBuilderFactory>();
+            builder.AddSingleton<SearchResultMessageBuilderFactory>();
+            builder.AddSingleton<PagesListGenerator>();
 
             string telegramBotId = JObject.Parse(
                 System.IO.File.ReadAllText("credentials.json"))["TelegramBotId"].Value<string>();
@@ -86,7 +89,7 @@ namespace NureSEConsultations.Bot
             try
             {
                 var res = e.CallbackQuery;
-                Console.WriteLine($"{res.From.FirstName} {res.From.LastName}: {res.Message} {res.Data}");
+                Console.WriteLine($"{res.From.FirstName} {res.From.LastName}: {res.Data}");
                 if (e != null)
                 {
                     string route = res.Data.Substring(0, res.Data.IndexOf(' '));

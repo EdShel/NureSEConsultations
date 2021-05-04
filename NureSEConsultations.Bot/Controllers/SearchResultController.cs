@@ -11,7 +11,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace NureSEConsultations.Bot.Controllers
 {
-    public class DefaultController
+    public class SearchResultController
     {
         private readonly ITelegramBotClient botClient;
 
@@ -19,32 +19,22 @@ namespace NureSEConsultations.Bot.Controllers
 
         private readonly SearchResultMessageBuilderFactory messageBuilderFactory;
 
-        private int stickerCounter;
-
-        public DefaultController(ITelegramBotClient botClient, IConsultationSearcher searcher, SearchResultMessageBuilderFactory messageBuilderFactory)
+        public SearchResultController(
+            ITelegramBotClient botClient,
+            IConsultationSearcher searcher,
+            SearchResultMessageBuilderFactory messageBuilderFactory)
         {
             this.botClient = botClient;
             this.searcher = searcher;
             this.messageBuilderFactory = messageBuilderFactory;
         }
 
-        [Command(Routes.DEFAULT)]
-        public async Task HandleNewUser(Message message)
+        [Command(Routes.SEARCH_RESULT)]
+        public async Task ShowSearchResult(CallbackQuery message)
         {
-            //// Actually, race conditions does not matter 
-            //string stickerName = this.stickerCounter++ % 2 == 0
-            //    ? Stickers.DO_NOT_UNDERSTAND0
-            //    : Stickers.DO_NOT_UNDERSTAND1;
-            //var stickerFileStream = new FileStream(stickerName, FileMode.Open, FileAccess.Read);
-            //await this.botClient.SendStickerAsync(
-            //    message.Chat.Id,
-            //    new InputOnlineFile(stickerFileStream)
-            //);
-
-            string searchQuery = message.Text;
+            Routes.ParseForSearchResult(message.Data, out string searchQuery, out int pageIndex);
 
             const int pageSize = 10;
-            const int pageIndex = 0;
             var allFoundItems = this.searcher.Search(searchQuery);
             int pagesCount = (int)Math.Ceiling((double)allFoundItems.Count() / pageSize);
             var currentPage = allFoundItems
@@ -57,11 +47,15 @@ namespace NureSEConsultations.Bot.Controllers
             var keyboard = messageBuilder.GetPagesSwitcher();
 
             await this.botClient.SendTextMessageAsync(
-                chatId: message.Chat.Id,
+                chatId: message.Message.Chat,
                 text: text,
                 parseMode: Telegram.Bot.Types.Enums.ParseMode.Html,
                 disableWebPagePreview: true,
                 replyMarkup: new InlineKeyboardMarkup(keyboard)
+            );
+
+            await this.botClient.DeleteMessageAsync(
+                message.Message.Chat.Id, message.Message.MessageId
             );
         }
 

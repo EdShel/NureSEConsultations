@@ -34,8 +34,7 @@ namespace NureSEConsultations.Bot
 
         public Router(IServiceProvider services, string defaultCommand)
         {
-            List<Route> a = FindRoutes();
-            this.routesActions = a;
+            this.routesActions = FindRoutes();
             this.services = services;
             this.defaultCommand = defaultCommand;
             if (!this.routesActions.Any(r => r.Command == defaultCommand))
@@ -55,7 +54,7 @@ namespace NureSEConsultations.Bot
                     var commandAttribute = m.GetCustomAttribute<CommandAttribute>(true);
                     return new Route(commandAttribute.Command, m);
                 }))
-                .OrderByDescending(r => r.Command.Length)
+                .OrderBy(r => r.Command.Length)
                 .ToList();
         }
 

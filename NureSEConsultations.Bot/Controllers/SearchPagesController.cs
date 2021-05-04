@@ -7,31 +7,31 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace NureSEConsultations.Bot.Controllers
 {
-    public class PagesController
+    public class SearchPagesController
     {
         private readonly ITelegramBotClient botClient;
 
         private readonly PagesListGenerator pagesListGenerator;
 
-        public PagesController(ITelegramBotClient botClient, PagesListGenerator pagesListGenerator)
+        public SearchPagesController(ITelegramBotClient botClient, PagesListGenerator pagesListGenerator)
         {
             this.botClient = botClient;
             this.pagesListGenerator = pagesListGenerator;
         }
 
-        [Command(Routes.PAGES)]
-        public async Task ShowPagesConsultation(CallbackQuery message)
+        [Command(Routes.SEARCH_PAGES)]
+        public async Task ShowSearchPages(CallbackQuery message)
         {
             await this.botClient.AnswerCallbackQueryAsync(
                 callbackQueryId: message.Id
             );
 
-            Routes.ParseRouteForPages(message.Data, out string consultationType, out int pagesCount);
+            Routes.ParseForSearchPages(message.Data, out string searchQuery, out int pagesCount);
 
-            var textMessage = $"Сторінки для <i>{consultationType}</i> {Emoji.NERD_FACE}";
-            var buttons = this.pagesListGenerator.GetPageButtons(
+            var textMessage = $"Для <i>{searchQuery}</i> знайшов {pagesCount} сторінок {Emoji.NERD_FACE}";
+            var buttons = pagesListGenerator.GetPageButtons(
                 pagesCount: pagesCount,
-                routeForPage: pageIndex => Routes.ForConcreteConsultation(consultationType, pageIndex));
+                routeForPage: pageIndex => Routes.ForSearchResult(searchQuery, pageIndex));
 
             await this.botClient.SendTextMessageAsync(
                 chatId: message.Message.Chat,

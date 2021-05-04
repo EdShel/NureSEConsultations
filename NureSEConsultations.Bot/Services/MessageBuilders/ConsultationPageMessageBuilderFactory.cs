@@ -2,7 +2,7 @@
 using NureSEConsultations.Bot.Model;
 using System.Collections.Generic;
 
-namespace NureSEConsultations.Bot.Services
+namespace NureSEConsultations.Bot.Services.MessageBuilders
 {
     public class ConsultationPageMessageBuilderFactory
     {
@@ -13,7 +13,7 @@ namespace NureSEConsultations.Bot.Services
                 pageIndex: pageIndex,
                 pagesCount: pagesCount,
                 routeToViewPage: pageNumber => Routes.ForConcreteConsultation(consultationType, pageNumber),
-                routeToPageSelect: pagesCount => Routes.RouteForPages(consultationType, pagesCount));
+                routeToPageSelect: pagesCount => Routes.ForPages(consultationType, pagesCount));
         }
     }
 }
