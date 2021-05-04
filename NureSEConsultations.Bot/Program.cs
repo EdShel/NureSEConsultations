@@ -3,8 +3,8 @@ using Newtonsoft.Json.Linq;
 using NureSEConsultations.Bot.Constants;
 using NureSEConsultations.Bot.Model;
 using NureSEConsultations.Bot.Parser;
+using NureSEConsultations.Bot.Services;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Telegram.Bot;
@@ -24,7 +24,7 @@ namespace NureSEConsultations.Bot
             var builder = new ServiceCollection();
 
             var appsettings = JObject.Parse(System.IO.File.ReadAllText("appsettings.json"));
-            var ws = appsettings["ConsultationsParsers"].ToDictionary(
+            var worksheetConfig = appsettings["ConsultationsParsers"].ToDictionary(
                 k => (k as JProperty).Name,
                 v => (v as JProperty).Value.ToObject<WorksheetConfig>()
             );
@@ -32,7 +32,7 @@ namespace NureSEConsultations.Bot
                 credentialsFile: "googleCredentials.json",
                 tokensTempFile: "tokens.json",
                 googleSheetId: appsettings.Value<string>("GoogleSheetId"),
-                worksheetConfig: ws);
+                worksheetConfig: worksheetConfig);
 
             builder.AddSingleton(repoConfig);
             builder.AddSingleton<IParserResolver, ParserResolver>();
@@ -40,6 +40,7 @@ namespace NureSEConsultations.Bot
             builder.AddSingleton<IConsultationRepository, CachingRepository>();
 
             builder.AddSingleton(new DbContextFactory(appsettings.Value<string>("DatabaseConnectionString")));
+            builder.AddSingleton<ITempFileProvider>(new LocalDirTempFileProvider(appsettings.Value<string>("VoiceTempFolder")));
 
             string telegramBotId = JObject.Parse(
                 System.IO.File.ReadAllText("credentials.json"))["TelegramBotId"].Value<string>();
@@ -114,11 +115,10 @@ namespace NureSEConsultations.Bot
 
         private static async void OnMessageReceived(object sender, MessageEventArgs e)
         {
-            if (e.Message.Text != null)
-            {
-                await router.HandleAsync(e.Message.Text, e.Message);
-            }
-            Console.WriteLine($"{e.Message.From.FirstName} {e.Message.From.LastName}: {e.Message.Text}");
+            string route = e.Message.Text ?? e.Message.Type.ToString();
+            await router.HandleAsync(route, e.Message);
+
+            Console.WriteLine($"{e.Message.From.FirstName} {e.Message.From.LastName}: {route}");
         }
     }
 }

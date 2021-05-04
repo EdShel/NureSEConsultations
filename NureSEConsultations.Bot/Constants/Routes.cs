@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using Telegram.Bot.Types.Enums;
 
 namespace NureSEConsultations.Bot.Constants
 {
@@ -15,6 +16,8 @@ namespace NureSEConsultations.Bot.Constants
         public const string CONCRETE_CONSULTATION = "list";
 
         public const string PAGES = "pages";
+
+        public const string VOICE_SEARCH = nameof(MessageType.Voice);
 
         public static string ForConcreteConsultation(string type, int page)
         {

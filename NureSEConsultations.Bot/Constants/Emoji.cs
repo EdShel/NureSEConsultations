@@ -19,5 +19,7 @@
         public const string CHART_WITH_UPWARDS_TREND = "\ud83d\udcc8";
 
         public const string CHART_WITH_DOWNWARDS_TREND = "\ud83d\udcc9";
+
+        public const string HEAR_NO_EVIL = "\ud83d\ude49";
     }
 }

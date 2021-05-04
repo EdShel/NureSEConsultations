@@ -1,16 +1,74 @@
-﻿using NureSEConsultations.Bot.Constants;
+﻿using NAudio.Wave;
+using NureSEConsultations.Bot.Constants;
 using NureSEConsultations.Bot.Model;
+using NureSEConsultations.Bot.Services;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.InputFiles;
 using Telegram.Bot.Types.ReplyMarkups;
+using File = System.IO.File;
 
 namespace NureSEConsultations.Bot.Controllers
 {
+    public class VoiceSearchController
+    {
+        private const int MAX_VOICE_LENGTH_SECONDS = 5;
+
+        private readonly ITelegramBotClient botClient;
+
+        private readonly IConsultationRepository consultationRepository;
+
+        private readonly ITempFileProvider tempFileProvider;
+
+        public VoiceSearchController(ITelegramBotClient botClient, IConsultationRepository consultationRepository, ITempFileProvider tempFileProvider)
+        {
+            this.botClient = botClient;
+            this.consultationRepository = consultationRepository;
+            this.tempFileProvider = tempFileProvider;
+        }
+
+        [Command(Routes.VOICE_SEARCH)]
+        public async Task SearchByVoice(Message message)
+        {
+            if (message.Voice.Duration > MAX_VOICE_LENGTH_SECONDS)
+            {
+                await this.botClient.SendTextMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: $"Занадто довге повідомлення {Emoji.HEAR_NO_EVIL}. " +
+                          $"Спробуй вкластися у {MAX_VOICE_LENGTH_SECONDS} секунд."
+                );
+                return;
+            }
+
+            string voiceId = message.Voice.FileId;
+            var voiceFileInfo = await this.botClient.GetFileAsync(voiceId);
+            using var ogg = new MemoryStream(voiceFileInfo.FileSize);
+            await this.botClient.DownloadFileAsync(voiceFileInfo.FilePath, ogg);
+
+            var oggFilePath = Path.Combine(@"C:\Users\Admin\Desktop\Audio", Guid.NewGuid() + ".ogg");
+            File.WriteAllBytes(oggFilePath, ogg.ToArray());
+
+            using var wav = new MemoryStream();
+            ogg.Position = 0;
+            new OggToWavConverter().Convert(ogg, wav);
+
+            var filePathOnDisk = Path.Combine(@"C:\Users\Admin\Desktop\Audio", Guid.NewGuid() + ".wav");
+            await File.WriteAllBytesAsync(filePathOnDisk, wav.ToArray());
+
+            wav.Position = 0;
+            await botClient.SendVoiceAsync(
+                chatId: message.Chat.Id,
+                voice: new InputOnlineFile(wav)
+            );
+        }
+    }
+
     public class ConsultationController
     {
         private readonly ITelegramBotClient botClient;

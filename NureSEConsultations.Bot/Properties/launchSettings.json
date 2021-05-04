@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "NureSEConsultations.Bot": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "C:\\Users\\Admin\\Desktop\\creds.json"
+      }
+    }
+  }
+}
